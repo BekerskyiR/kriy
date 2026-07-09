@@ -1,7 +1,12 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import ProductCard from "../../components/ProductCard.astro";
-import { getCategories, getProductsByCategory, type GenderFilter } from "../../lib/catalog";
+import {
+  getCategories,
+  getProductsByCategory,
+  getBrandsInCategory,
+  type GenderFilter,
+} from "../../lib/catalog";
 
 const { slug } = Astro.params;
 const pageParam = Number(Astro.url.searchParams.get("page") ?? "1");
@@ -17,12 +22,32 @@ if (!category) {
   return new Response(null, { status: 404, statusText: "Category not found" });
 }
 
-const { products, total, totalPages } = await getProductsByCategory(slug!, page, 24, gender);
+// brand facet + validate the requested brand against brands actually present
+const brandFacets = await getBrandsInCategory(slug!, gender);
+const brandParam = Astro.url.searchParams.get("brand");
+const activeBrand = brandFacets.some((b) => b.slug === brandParam) ? brandParam! : undefined;
+
+const { products, total, totalPages } = await getProductsByCategory(
+  slug!,
+  page,
+  24,
+  gender,
+  activeBrand,
+);
 const nf = new Intl.NumberFormat("uk-UA");
 
-// keep the active gender when paging
+// URL helpers preserve the other active filters
 const gQuery = gender === "all" ? "" : `&g=${gender}`;
-const pageHref = (p: number) => `/c/${slug}?page=${p}${gQuery}`;
+const brandQuery = activeBrand ? `&brand=${activeBrand}` : "";
+const pageHref = (p: number) => `/c/${slug}?page=${p}${gQuery}${brandQuery}`;
+// switching brand keeps gender but resets paging
+const brandHref = (b?: string) => {
+  const params = new URLSearchParams();
+  if (gender !== "all") params.set("g", gender);
+  if (b) params.set("brand", b);
+  const qs = params.toString();
+  return qs ? `/c/${slug}?${qs}` : `/c/${slug}`;
+};
 ---
 
 <Layout
@@ -38,6 +63,29 @@ const pageHref = (p: number) => `/c/${slug}?page=${p}${gQuery}`;
         <h2>{category.nameUk}</h2>
         <span class="count">{nf.format(total)} товарів</span>
       </div>
+
+      {
+        brandFacets.length > 1 && (
+          <nav class="brand-filter" aria-label="Фільтр за брендом">
+            <a
+              href={brandHref()}
+              class:list={["brand-chip", { active: !activeBrand }]}
+              aria-current={!activeBrand ? "true" : undefined}
+            >
+              Усі бренди
+            </a>
+            {brandFacets.map((b) => (
+              <a
+                href={brandHref(b.slug)}
+                class:list={["brand-chip", { active: activeBrand === b.slug }]}
+                aria-current={activeBrand === b.slug ? "true" : undefined}
+              >
+                {b.name} <span class="brand-chip__n">{b.count}</span>
+              </a>
+            ))}
+          </nav>
+        )
+      }
 
       {
         products.length > 0 ? (

@@ -110,6 +110,43 @@ export async function getBrands(opts: { featuredOnly?: boolean } = {}): Promise<
   }
 }
 
+export interface BrandFacet {
+  slug: string;
+  name: string;
+  count: number;
+}
+
+/**
+ * Brands that have in_stock products in a category (honoring the gender
+ * filter) — for the category page's brand-filter chips. Counts come from an
+ * aggregation; names are joined in from the brands collection.
+ */
+export async function getBrandsInCategory(
+  categorySlug: string,
+  gender: GenderFilter = "all",
+): Promise<BrandFacet[]> {
+  try {
+    const agg = applyGender(
+      auth
+        .elevate(items.aggregate)("products")
+        .filter(items.filter().eq("categorySlug", categorySlug).eq("availability", "in_stock")),
+      gender,
+    );
+    const { items: rows } = await agg.group("brandSlug").count().run();
+    const nameBySlug = new Map((await getBrands()).map((b) => [b.slug, b.name]));
+    return (rows as any[])
+      .map((r) => {
+        const slug = r._id?.brandSlug ?? r.brandSlug;
+        return { slug, name: nameBySlug.get(slug) ?? slug, count: r.count ?? r.itemsCount ?? 0 };
+      })
+      .filter((b) => b.slug)
+      .sort((a, b) => b.count - a.count);
+  } catch (e) {
+    console.error("getBrandsInCategory failed:", e);
+    return [];
+  }
+}
+
 export interface ProductPage {
   products: Product[];
   total: number;
@@ -119,7 +156,7 @@ export interface ProductPage {
 }
 
 /**
- * Products in a category — in_stock only, paginated, gender-filtered.
+ * Products in a category — in_stock only, paginated, gender- and brand-filtered.
  * Featured brands float to the top (sorted in memory: Wix Data has no join
  * onto the brand).
  */
@@ -128,17 +165,24 @@ export async function getProductsByCategory(
   page = 1,
   pageSize = 24,
   gender: GenderFilter = "all",
+  brandSlug?: string,
 ): Promise<ProductPage> {
   try {
     const featuredSlugs = new Set((await getBrands({ featuredOnly: true })).map((b) => b.slug));
-    const base = auth
-      .elevate(items.query)("products")
-      .eq("categorySlug", categorySlug)
-      .eq("availability", "in_stock");
-    const { items: results, totalCount } = await applyGender(base, gender)
-      .skip((page - 1) * pageSize)
-      .limit(pageSize)
-      .find();
+    const buildQuery = () => {
+      let q = auth
+        .elevate(items.query)("products")
+        .eq("categorySlug", categorySlug)
+        .eq("availability", "in_stock");
+      if (brandSlug) q = q.eq("brandSlug", brandSlug);
+      return applyGender(q, gender);
+    };
+    // .find() doesn't reliably return a full totalCount, so count explicitly —
+    // otherwise total collapses to the page size and pagination never shows.
+    const [{ items: results }, total] = await Promise.all([
+      buildQuery().skip((page - 1) * pageSize).limit(pageSize).find(),
+      buildQuery().count(),
+    ]);
 
     const products = (results as Product[]).sort((a, b) => {
       const af = featuredSlugs.has(a.brandSlug) ? 0 : 1;
@@ -146,7 +190,6 @@ export async function getProductsByCategory(
       return af - bf;
     });
 
-    const total = totalCount ?? products.length;
     return {
       products,
       total,
