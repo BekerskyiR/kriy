@@ -45,6 +45,19 @@ const langHref = (loc: Locale) => `/set-lang?to=${loc}&back=${encodeURIComponent
     <title>{pageTitle}</title>
   </head>
   <body>
+    <!-- Full-page loader shown during SSR navigation (each page is a fresh
+         server render, so transitions take a beat). Themed as a running stitch:
+         a needle draws a red thread across the fabric. -->
+    <div id="page-loader" class="page-loader" aria-hidden="true">
+      <div class="page-loader__inner">
+        <span class="page-loader__mark">КРІ<span class="ye">Й</span></span>
+        <div class="page-loader__seam" role="progressbar" aria-label="Loading">
+          <span class="page-loader__thread"></span>
+          <span class="page-loader__needle"></span>
+        </div>
+      </div>
+    </div>
+
     <header class="site-header">
       <div class="container site-header__inner">
         <a class="wordmark" href="/">КРІ<span class="ye">Й</span></a>
@@ -92,5 +105,30 @@ const langHref = (loc: Locale) => `/set-lang?to=${loc}&back=${encodeURIComponent
         </div>
       </div>
     </footer>
+
+    <script is:inline>
+      (() => {
+        const loader = document.getElementById("page-loader");
+        if (!loader) return;
+        const here = () => location.pathname + location.search;
+        // Show the loader when the user starts navigating to another internal page.
+        document.addEventListener("click", (e) => {
+          if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+          const a = e.target.closest("a[href]");
+          if (!a || a.target === "_blank" || a.hasAttribute("download")) return;
+          let url;
+          try { url = new URL(a.href, location.href); } catch { return; }
+          if (url.origin !== location.origin) return;            // external → new tab, skip
+          if (url.pathname + url.search === here()) return;        // same page, skip
+          // small delay: on fast navigations the new page swaps in before this
+          // fires (the timer dies with the old page), so the loader never flashes
+          setTimeout(() => loader.classList.add("is-loading"), 140);
+        });
+        // Hide again if the page is restored from the bfcache (back/forward).
+        window.addEventListener("pageshow", (e) => {
+          if (e.persisted) loader.classList.remove("is-loading");
+        });
+      })();
+    </script>
   </body>
 </html>

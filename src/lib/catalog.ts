@@ -6,9 +6,26 @@ import { media } from "@wix/sdk";
  * Catalog data access. The frontend reads the CMS directly via @wix/data —
  * there is no custom backend. Every query is elevated (auth.elevate), because
  * without it read-restricted collections silently return nothing.
+ *
+ * A tiny TTL cache fronts the near-static reads (categories, brands, counts):
+ * they change once per ingest, not per click. Within a single page render it
+ * also deduplicates repeated getBrands() calls; across warm requests it saves
+ * the round-trip entirely. Product listings are NOT cached (paginated, many
+ * variants, must stay fresh).
  */
 
 export type GenderFilter = "all" | "men" | "women";
+
+const CACHE_TTL_MS = 60_000;
+const cache = new Map<string, { at: number; val: unknown }>();
+
+async function cached<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.val as T;
+  const val = await fn();
+  cache.set(key, { at: Date.now(), val });
+  return val;
+}
 
 export interface Category {
   _id: string;
@@ -77,21 +94,24 @@ export function formatPrice(priceMinor: number | null, currency: string): string
 }
 
 export async function getCategories(): Promise<Category[]> {
-  try {
-    const { items: results } = await auth
-      .elevate(items.query)("categories")
-      .ascending("sortOrder")
-      .limit(100)
-      .find();
-    return results as Category[];
-  } catch (e) {
-    console.error("getCategories failed:", e);
-    return [];
-  }
+  return cached("categories", async () => {
+    try {
+      const { items: results } = await auth
+        .elevate(items.query)("categories")
+        .ascending("sortOrder")
+        .limit(100)
+        .find();
+      return results as Category[];
+    } catch (e) {
+      console.error("getCategories failed:", e);
+      return [];
+    }
+  });
 }
 
 /** In-stock product count per category (for the index counters), honoring gender. */
 export async function getCategoryCounts(gender: GenderFilter = "all"): Promise<Record<string, number>> {
+  return cached(`counts:${gender}`, async () => {
   try {
     const agg = applyGender(
       auth.elevate(items.aggregate)("products").filter(items.filter().eq("availability", "in_stock")),
@@ -108,18 +128,21 @@ export async function getCategoryCounts(gender: GenderFilter = "all"): Promise<R
     console.error("getCategoryCounts failed:", e);
     return {};
   }
+  });
 }
 
 export async function getBrands(opts: { featuredOnly?: boolean } = {}): Promise<Brand[]> {
-  try {
-    let builder = auth.elevate(items.query)("brands").eq("isActive", true);
-    if (opts.featuredOnly) builder = builder.eq("isFeatured", true);
-    const { items: results } = await builder.ascending("name").limit(50).find();
-    return results as Brand[];
-  } catch (e) {
-    console.error("getBrands failed:", e);
-    return [];
-  }
+  return cached(`brands:${opts.featuredOnly ? "featured" : "all"}`, async () => {
+    try {
+      let builder = auth.elevate(items.query)("brands").eq("isActive", true);
+      if (opts.featuredOnly) builder = builder.eq("isFeatured", true);
+      const { items: results } = await builder.ascending("name").limit(50).find();
+      return results as Brand[];
+    } catch (e) {
+      console.error("getBrands failed:", e);
+      return [];
+    }
+  });
 }
 
 export interface BrandFacet {
@@ -137,6 +160,7 @@ export async function getBrandsInCategory(
   categorySlug: string,
   gender: GenderFilter = "all",
 ): Promise<BrandFacet[]> {
+  return cached(`brandsInCat:${categorySlug}:${gender}`, async () => {
   try {
     const agg = applyGender(
       auth
@@ -157,6 +181,7 @@ export async function getBrandsInCategory(
     console.error("getBrandsInCategory failed:", e);
     return [];
   }
+  });
 }
 
 export interface ProductPage {
@@ -216,10 +241,12 @@ export async function getProductsByCategory(
 }
 
 export async function getTotalInStock(gender: GenderFilter = "all"): Promise<number> {
-  try {
-    const base = auth.elevate(items.query)("products").eq("availability", "in_stock");
-    return await applyGender(base, gender).count();
-  } catch {
-    return 0;
-  }
+  return cached(`total:${gender}`, async () => {
+    try {
+      const base = auth.elevate(items.query)("products").eq("availability", "in_stock");
+      return await applyGender(base, gender).count();
+    } catch {
+      return 0;
+    }
+  });
 }

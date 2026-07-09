@@ -20,15 +20,18 @@ const page = Number.isFinite(pageParam) && pageParam > 0 ? Math.floor(pageParam)
 const gParam = Astro.url.searchParams.get("g");
 const gender: GenderFilter = gParam === "men" || gParam === "women" ? gParam : "all";
 
-const categories = await getCategories();
+// categories + brand facet are independent — fetch in parallel
+const [categories, brandFacets] = await Promise.all([
+  getCategories(),
+  getBrandsInCategory(slug!, gender),
+]);
 const category = categories.find((c) => c.slug === slug);
 
 if (!category) {
   return new Response(null, { status: 404, statusText: "Category not found" });
 }
 
-// brand facet + validate the requested brand against brands actually present
-const brandFacets = await getBrandsInCategory(slug!, gender);
+// validate the requested brand against brands actually present
 const brandParam = Astro.url.searchParams.get("brand");
 const activeBrand = brandFacets.some((b) => b.slug === brandParam) ? brandParam! : undefined;
 

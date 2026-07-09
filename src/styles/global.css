@@ -83,6 +83,139 @@ img {
   padding-inline: var(--gap);
 }
 
+/* ---------- full-page loader (running stitch) ---------- */
+.page-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--ground) 94%, transparent);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+}
+
+.page-loader.is-loading {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.15s ease;
+}
+
+.page-loader__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.4rem;
+}
+
+.page-loader__mark {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.6rem;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+/* the fabric line the needle runs along */
+.page-loader__seam {
+  position: relative;
+  width: 240px;
+  height: 22px;
+}
+
+.page-loader__seam::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--line) 0 4px,
+    transparent 4px 8px
+  );
+}
+
+/* the red thread already sewn — flows to the right (perpetual motion) */
+.page-loader__thread {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 3px;
+  transform: translateY(-50%);
+  background: repeating-linear-gradient(
+    to right,
+    var(--accent) 0 9px,
+    transparent 9px 15px
+  );
+  background-size: 24px 100%;
+  animation: loader-flow 0.6s linear infinite;
+}
+
+/* the needle: runs along the seam, bobbing like real stitching */
+.page-loader__needle {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 2px;
+  height: 15px;
+  background: var(--text);
+  border-radius: 1px;
+  animation: loader-run 1.9s ease-in-out infinite, loader-bob 0.38s ease-in-out infinite alternate;
+}
+
+.page-loader__needle::before {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: -1px;
+  width: 4px;
+  height: 4px;
+  border: 1px solid var(--text);
+  border-radius: 50%;
+  background: transparent;
+}
+
+@keyframes loader-flow {
+  to {
+    background-position-x: 24px;
+  }
+}
+
+@keyframes loader-run {
+  0% {
+    left: 4px;
+  }
+  100% {
+    left: calc(100% - 4px);
+  }
+}
+
+@keyframes loader-bob {
+  from {
+    transform: translateY(-90%) rotate(18deg);
+  }
+  to {
+    transform: translateY(-25%) rotate(18deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-loader__thread,
+  .page-loader__needle {
+    animation: none;
+  }
+  .page-loader__needle {
+    left: calc(50% - 1px);
+    transform: translateY(-50%) rotate(18deg);
+  }
+}
+
 /* ---------- stitch divider ---------- */
 .stitch {
   height: 2px;
