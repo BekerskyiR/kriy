@@ -176,8 +176,37 @@ npm run release                       # deploy to Wix
 > site's canonical host, so an end-to-end checkout/redirect test only works
 > **after `npm run release`**.
 
-Periodic feed refresh for the event day — run `npm run ingest` manually or via a
-GitHub Action cron.
+Periodic feed refresh for the event day — run `npm run ingest` manually (a
+scheduled version is on the roadmap below).
+
+---
+
+## Roadmap (next version)
+
+### Scheduled ingest — keep the catalog live automatically
+
+**Status: planned, not implemented.** The sync engine already exists — each
+`npm run ingest` run is idempotent and reconciles the catalog against the
+feeds:
+
+- new products in a feed → added,
+- existing products → price/availability refreshed,
+- products that disappeared from a feed → marked `out_of_stock` (hidden from
+  the storefront, which only shows `in_stock`),
+- products that reappear → reactivated to `in_stock`.
+
+What's missing is only a **trigger**. Today the ingest runs by hand, so the
+catalog is only as fresh as the last manual run. The plan is a **daily
+GitHub Action cron** that runs `npm run ingest` on a schedule:
+
+- Add `.github/workflows/ingest.yml` (cron, e.g. daily at 06:00).
+- CI can't use the interactive CLI login, so authenticate with a **long-lived
+  Wix API key** stored in repo secrets. The ingest already reads
+  `WIX_SITE_TOKEN` / `WIX_SITE_ID` from env for exactly this path — no code
+  change needed, only the workflow + the secret.
+- Alternative to GitHub Actions: any external cron hitting the same script.
+
+This turns the current one-off snapshot into a self-updating catalog.
 
 ---
 
