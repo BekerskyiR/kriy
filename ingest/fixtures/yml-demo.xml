@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Демо-фікстура формату YML (Prom.ua / Хорошоп) для тестів парсера -->
+<yml_catalog date="2026-07-09 10:00">
+  <shop>
+    <name>demo-brand</name>
+    <company>Demo Brand LLC</company>
+    <url>https://demo-brand.example</url>
+    <currencies>
+      <currency id="UAH" rate="1"/>
+    </currencies>
+    <categories>
+      <category id="1">Футболки</category>
+      <category id="2">Худі</category>
+      <category id="3">Тоут-беги</category>
+    </categories>
+    <offers>
+      <offer id="SKU-001" available="true">
+        <name>Футболка "Паляниця" біла</name>
+        <price>950</price>
+        <currencyId>UAH</currencyId>
+        <categoryId>1</categoryId>
+        <picture>https://demo-brand.example/img/palyanytsia-front.jpg</picture>
+        <picture>https://demo-brand.example/img/palyanytsia-back.jpg</picture>
+        <url>https://demo-brand.example/products/palyanytsia-tee</url>
+        <description>Оверсайз футболка зі щільної бавовни, принт "Паляниця".</description>
+      </offer>
+      <offer id="SKU-002" available="false">
+        <name>Худі "Добрий вечір" чорне</name>
+        <price>1 850</price>
+        <currencyId>UAH</currencyId>
+        <categoryId>2</categoryId>
+        <picture>https://demo-brand.example/img/hoodie-black.jpg</picture>
+        <url>https://demo-brand.example/products/dobryi-vechir-hoodie</url>
+        <description>Утеплене худі з начосом.</description>
+      </offer>
+      <offer id="SKU-003" available="true">
+        <name>Тоут-бег "Мрія"</name>
+        <price>640.50</price>
+        <currencyId>UAH</currencyId>
+        <categoryId>3</categoryId>
+        <picture>https://demo-brand.example/img/tote-mriya.jpg</picture>
+        <url>https://demo-brand.example/products/mriya-tote</url>
+        <description>Бавовняний тоут із шовкографією.</description>
+      </offer>
+    </offers>
+  </shop>
+</yml_catalog>

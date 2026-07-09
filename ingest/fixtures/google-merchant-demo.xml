@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Демо-фікстура формату Google Merchant / RSS 2.0 для тестів парсера -->
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>Demo Merchant Brand</title>
+    <link>https://demo-merchant.example</link>
+    <description>Demo feed</description>
+    <item>
+      <g:id>GM-100</g:id>
+      <g:title>Сорочка лляна молочна</g:title>
+      <g:description>Вільна лляна сорочка з накладними кишенями.</g:description>
+      <g:link>https://demo-merchant.example/products/linen-shirt</g:link>
+      <g:image_link>https://demo-merchant.example/img/linen-shirt.jpg</g:image_link>
+      <g:additional_image_link>https://demo-merchant.example/img/linen-shirt-2.jpg</g:additional_image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>2400.00 UAH</g:price>
+      <g:product_type>Shirts</g:product_type>
+    </item>
+    <item>
+      <g:id>GM-101</g:id>
+      <g:title>Джинси wide-leg</g:title>
+      <g:description>Широкі джинси з високою посадкою, 100% котон.</g:description>
+      <g:link>https://demo-merchant.example/products/wide-leg-jeans</g:link>
+      <g:image_link>https://demo-merchant.example/img/jeans.jpg</g:image_link>
+      <g:availability>out of stock</g:availability>
+      <g:price>3200.00 UAH</g:price>
+      <g:sale_price>2560.00 UAH</g:sale_price>
+      <g:product_type>Jeans</g:product_type>
+    </item>
+  </channel>
+</rss>

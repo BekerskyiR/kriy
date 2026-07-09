@@ -1,0 +1,76 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import ProductCard from "../../components/ProductCard.astro";
+import { getCategories, getProductsByCategory } from "../../lib/catalog";
+
+const { slug } = Astro.params;
+const pageParam = Number(Astro.url.searchParams.get("page") ?? "1");
+const page = Number.isFinite(pageParam) && pageParam > 0 ? Math.floor(pageParam) : 1;
+
+const categories = await getCategories();
+const category = categories.find((c) => c.slug === slug);
+
+if (!category) {
+  return new Response(null, { status: 404, statusText: "Category not found" });
+}
+
+const { products, total, totalPages } = await getProductsByCategory(slug!, page, 24);
+const nf = new Intl.NumberFormat("uk-UA");
+
+const pageHref = (p: number) => `/c/${slug}?page=${p}`;
+---
+
+<Layout
+  nav="catalog"
+  title={`${category.nameUk} — СВОЄ`}
+  description={`${category.nameUk}: товари українських брендів. ${nf.format(total)} позицій у наявності.`}
+>
+  <section class="section">
+    <div class="container">
+      <span class="eyebrow"><a href="/">Каталог</a> / {category.nameUk}</span>
+      <div class="section__head">
+        <h2>{category.nameUk}</h2>
+        <span class="count">{nf.format(total)} товарів</span>
+      </div>
+
+      {
+        products.length > 0 ? (
+          <div class="product-grid">
+            {products.map((p) => (
+              <ProductCard product={p} />
+            ))}
+          </div>
+        ) : (
+          <div class="empty-state">
+            <h3>Поки порожньо</h3>
+            <p>
+              У цій категорії ще немає товарів у наявності. Загляни в інші розділи
+              або повернись пізніше — каталог оновлюється щодня.
+            </p>
+            <a class="btn btn--ghost" href="/">← До категорій</a>
+          </div>
+        )
+      }
+
+      {
+        totalPages > 1 && (
+          <nav class="pagination" aria-label="Сторінки">
+            <a class={page <= 1 ? "disabled" : ""} href={pageHref(page - 1)} rel="prev">
+              ← Назад
+            </a>
+            <span>
+              {page} / {totalPages}
+            </span>
+            <a
+              class={page >= totalPages ? "disabled" : ""}
+              href={pageHref(page + 1)}
+              rel="next"
+            >
+              Далі →
+            </a>
+          </nav>
+        )
+      }
+    </div>
+  </section>
+</Layout>

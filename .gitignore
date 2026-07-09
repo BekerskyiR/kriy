@@ -26,3 +26,7 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# agent tooling skills (reinstall via `wix skills`)
+.agents/
+skills-lock.json

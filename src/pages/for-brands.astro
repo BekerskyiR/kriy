@@ -1,0 +1,71 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { getFeaturedPlan } from "../lib/plans";
+import { getBrands, getTotalInStock } from "../lib/catalog";
+
+const [plan, brands, total] = await Promise.all([
+  getFeaturedPlan(),
+  getBrands(),
+  getTotalInStock(),
+]);
+
+// сумарні переходи, які вітрина вже привела брендам — головний аргумент пітчу
+const totalClicks = brands.reduce((sum, b) => sum + (b.outboundClicks ?? 0), 0);
+const nf = new Intl.NumberFormat("uk-UA");
+---
+
+<Layout
+  nav="brands"
+  title="Для брендів — СВОЄ"
+  description="Розмістіть свій бренд у вітрині СВОЄ і отримуйте переходи цільових покупців напряму на ваш сайт."
+>
+  <section class="section">
+    <div class="container pitch">
+      <span class="eyebrow">Для брендів</span>
+      <h1>Ваш одяг там, де його шукають.</h1>
+      <p class="pitch__lede">
+        СВОЄ збирає товари українських брендів по категоріях і веде покупця
+        напряму до вас — без комісій з продажу й без посередництва в оплаті.
+        Ми вітрина, ви — магазин.
+      </p>
+
+      <div class="hero__meta">
+        <span><strong>{nf.format(total)}</strong> товарів у каталозі</span>
+        <span><strong>{brands.length}</strong> брендів уже з нами</span>
+        <span><strong>{nf.format(totalClicks)}</strong> переходів приведено</span>
+      </div>
+
+      <ol class="steps">
+        <li><span>Надсилаєте нам посилання на товарний фід — ми підключаємо ваш каталог.</span></li>
+        <li><span>Товари з'являються у відповідних категоріях автоматично й оновлюються щодня.</span></li>
+        <li><span>Хочете більше уваги — стаєте <strong>featured</strong> і піднімаєтесь угору вітрини.</span></li>
+      </ol>
+
+      {
+        plan ? (
+          <div class="plan-card">
+            <span class="badge-featured">featured</span>
+            <h3>{plan.name}</h3>
+            <div class="price">
+              {plan.priceText.split(" / ")[0]}
+              <small>/ міс</small>
+            </div>
+            <ul>
+              {plan.perks.map((perk) => (
+                <li>{perk}</li>
+              ))}
+            </ul>
+            <a class="btn btn--primary" href={`/checkout?planId=${plan._id}`}>
+              Стати featured →
+            </a>
+          </div>
+        ) : (
+          <div class="empty-state" style="margin-top:2.5rem">
+            <h3>Тариф тимчасово недоступний</h3>
+            <p>Напишіть нам — підключимо вас вручну.</p>
+          </div>
+        )
+      }
+    </div>
+  </section>
+</Layout>

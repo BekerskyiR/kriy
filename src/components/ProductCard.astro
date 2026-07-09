@@ -1,0 +1,30 @@
+---
+import { formatPrice, resolveImage, type Product } from "../lib/catalog";
+
+interface Props {
+  product: Product;
+}
+const { product } = Astro.props;
+const img = resolveImage(product.mainImage, 500, 667);
+
+// Вихідне посилання на сайт бренда з UTM-міткою. Клік проходить через
+// /out — редіректор, що інкрементує лічильник переходів бренда, а тоді
+// віддає користувача на productUrl (див. src/pages/out.ts).
+const out = `/out?b=${encodeURIComponent(product.brandSlug)}&u=${encodeURIComponent(product.productUrl)}`;
+---
+
+<a class="tag-card" href={out} target="_blank" rel="noopener nofollow sponsored">
+  <div class="tag-card__img">
+    {
+      img ? (
+        <img src={img} alt={product.title} loading="lazy" width="500" height="667" />
+      ) : null
+    }
+  </div>
+  <div class="tag-card__body">
+    <span class="tag-card__brand">{product.brandName}</span>
+    <span class="tag-card__title">{product.title}</span>
+    <span class="tag-card__price">{formatPrice(product.priceMinor, product.currency)}</span>
+    <span class="tag-card__out">до бренда →</span>
+  </div>
+</a>
