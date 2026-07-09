@@ -19,6 +19,9 @@ const topCategories = categories
   .map((c) => ({ ...c, count: counts[c.slug] ?? 0 }))
   .filter((c) => c.count > 0);
 
+// carry the active gender into category links so the filter isn't lost
+const catHref = (slug: string) => (gender === "all" ? `/c/${slug}` : `/c/${slug}?g=${gender}`);
+
 const nf = new Intl.NumberFormat("uk-UA");
 ---
 
@@ -82,7 +85,7 @@ const nf = new Intl.NumberFormat("uk-UA");
         {
           topCategories.map((c, i) => (
             <li>
-              <a href={`/c/${c.slug}`}>
+              <a href={catHref(c.slug)}>
                 <span class="idx">{String(i + 1).padStart(2, "0")}</span>
                 <span class="name">{c.nameUk}</span>
                 <span class="count-n">{c.count}</span>
