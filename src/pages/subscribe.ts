@@ -1,15 +1,17 @@
 import type { APIRoute } from "astro";
 import { redirects } from "@wix/redirects";
-import { auth } from "@wix/essentials";
 
 /**
  * Starts a hosted checkout for a pricing plan and 302-redirects to it.
  * /subscribe?planId=<id>
  *
  * createRedirectSession returns the full Wix checkout URL; after payment Wix
- * sends the visitor back to postFlowUrl (the thank-you page). Elevated so the
- * call works in an anonymous visitor context. Named /subscribe (not /checkout)
- * to avoid colliding with @wix/astro's built-in payment-links /checkout route.
+ * sends the visitor back to postFlowUrl (the thank-you page). Called in the
+ * visitor/OAuth context @wix/astro provides — NOT elevated: a redirect session
+ * is bound to the headless OAuth app's client id, which auth.elevate (site
+ * context) does not carry ("client id does not correspond to a headless oauth
+ * app"). Named /subscribe (not /checkout) to avoid colliding with @wix/astro's
+ * built-in payment-links /checkout route.
  */
 export const GET: APIRoute = async ({ url, redirect, request }) => {
   const planId = url.searchParams.get("planId");
@@ -18,7 +20,7 @@ export const GET: APIRoute = async ({ url, redirect, request }) => {
   const origin = new URL(request.url).origin;
 
   try {
-    const session = await auth.elevate(redirects.createRedirectSession)({
+    const session = await redirects.createRedirectSession({
       paidPlansCheckout: { planId },
       callbacks: {
         postFlowUrl: `${origin}/thank-you`,
