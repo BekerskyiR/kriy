@@ -3,7 +3,7 @@ import type { RawProduct } from "../../types.js";
 import { parseCurrency, parsePriceMinor } from "./price.js";
 
 /**
- * Google Merchant / RSS 2.0 фід: <channel><item> з тегами g:id, g:title,
+ * Google Merchant / RSS 2.0 feed: <channel><item> with tags g:id, g:title,
  * g:price ("1200.00 UAH"), g:availability, g:image_link, g:link,
  * g:product_type / g:google_product_category.
  */

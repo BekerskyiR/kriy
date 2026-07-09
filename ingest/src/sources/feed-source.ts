@@ -6,25 +6,32 @@ import { parseShopifyJson } from "./parsers/shopify-json.js";
 import { parseYml } from "./parsers/yml.js";
 
 const USER_AGENT =
-  "Mozilla/5.0 (compatible; svoye-aggregator/1.0; +https://github.com/BekerskyiR/svoye)";
+  "Mozilla/5.0 (compatible; kriy-aggregator/1.0; +https://github.com/BekerskyiR/kriy)";
 
-/** Запобіжники для MVP: до 1000 товарів (json) / 200 (atom) з бренду. */
+/** MVP safety limits: up to 1000 products (json) / 200 (atom) per brand. */
 const MAX_JSON_PAGES = 4;
 const MAX_ATOM_PAGES = 8;
 
-async function fetchText(url: string): Promise<string> {
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Fetch with retry+backoff on transient rate-limit/5xx (Shopify throttles bursts). */
+async function fetchText(url: string, attempt = 0): Promise<string> {
   const res = await fetch(url, {
-    headers: { "User-Agent": USER_AGENT, Accept: "application/xml,text/xml,*/*" },
+    headers: { "User-Agent": USER_AGENT, Accept: "application/xml,text/xml,application/json,*/*" },
     signal: AbortSignal.timeout(20_000),
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-  return res.text();
+  if (res.ok) return res.text();
+  if ((res.status === 429 || res.status >= 500) && attempt < 4) {
+    await sleep(1000 * 2 ** attempt); // 1s, 2s, 4s, 8s
+    return fetchText(url, attempt + 1);
+  }
+  throw new Error(`HTTP ${res.status} for ${url}`);
 }
 
 /**
- * FeedSource — імплементація ProductSource поверх товарних XML-фідів.
- * Формат фіду оголошено на бренді (brand.feedFormat), автодетект —
- * фолбек за кореневим тегом.
+ * FeedSource — a ProductSource implementation over product XML feeds.
+ * The feed format is declared on the brand (brand.feedFormat); autodetection
+ * is the fallback based on the root tag.
  */
 export class FeedSource implements ProductSource {
   readonly sourceType = "feed" as const;
@@ -51,7 +58,7 @@ export class FeedSource implements ProductSource {
     }
   }
 
-  /** Shopify products.json: ?limit=250&page=N, поки сторінка не спорожніє. */
+  /** Shopify products.json: ?limit=250&page=N until a page comes back empty. */
   private async fetchShopifyJson(brand: Brand): Promise<RawProduct[]> {
     const all: RawProduct[] = [];
     for (let page = 1; page <= MAX_JSON_PAGES; page++) {
@@ -69,7 +76,7 @@ export class FeedSource implements ProductSource {
     return all;
   }
 
-  /** Shopify Atom пагінований — ходимо по ?page=N, поки сторінки не спорожніють. */
+  /** Shopify Atom is paginated — walk ?page=N until the pages run dry. */
   private async fetchShopifyAtom(feedUrl: string): Promise<RawProduct[]> {
     const all: RawProduct[] = [];
     const seen = new Set<string>();
@@ -80,7 +87,7 @@ export class FeedSource implements ProductSource {
       try {
         xml = await fetchText(url.toString());
       } catch {
-        break; // сторінка за межами каталогу → 404, зупиняємось
+        break; // page beyond the catalog -> 404, stop
       }
       const batch = parseShopifyAtom(xml);
       const fresh = batch.filter((p) => !seen.has(p.externalId));

@@ -3,10 +3,12 @@ import { auth } from "@wix/essentials";
 import { media } from "@wix/sdk";
 
 /**
- * Шар доступу до каталогу. Фронт читає CMS напряму через @wix/data —
- * кастомного бекенда немає. Усі запити елевейтимо (auth.elevate), бо
- * без цього read-restricted колекції мовчки повертають порожньо.
+ * Catalog data access. The frontend reads the CMS directly via @wix/data —
+ * there is no custom backend. Every query is elevated (auth.elevate), because
+ * without it read-restricted collections silently return nothing.
  */
+
+export type GenderFilter = "all" | "men" | "women";
 
 export interface Category {
   _id: string;
@@ -40,9 +42,14 @@ export interface Product {
   availability: "in_stock" | "out_of_stock";
 }
 
-const q = <T>() => auth.elevate(items.query) as unknown as (id: string) => any;
+/** Apply a gender filter to a products query (unisex products carry both flags). */
+function applyGender(builder: any, gender: GenderFilter) {
+  if (gender === "men") return builder.eq("forMen", true);
+  if (gender === "women") return builder.eq("forWomen", true);
+  return builder;
+}
 
-/** Wix-медіа (wix:image://) → CDN-URL; зовнішні URL лишаємо як є. */
+/** Wix media (wix:image://) -> CDN URL; external URLs are kept as-is. */
 export function resolveImage(url: string | null | undefined, w = 600, h = 800): string | null {
   if (!url) return null;
   if (url.startsWith("wix:image")) return media.getScaledToFillImageUrl(url, w, h, {});
@@ -71,15 +78,14 @@ export async function getCategories(): Promise<Category[]> {
   }
 }
 
-/** Кількість товарів in_stock по кожній категорії (для лічильників в індексі). */
-export async function getCategoryCounts(): Promise<Record<string, number>> {
+/** In-stock product count per category (for the index counters), honoring gender. */
+export async function getCategoryCounts(gender: GenderFilter = "all"): Promise<Record<string, number>> {
   try {
-    const { items: rows } = await auth
-      .elevate(items.aggregate)("products")
-      .filter(items.filter().eq("availability", "in_stock"))
-      .group("categorySlug")
-      .count()
-      .run();
+    const agg = applyGender(
+      auth.elevate(items.aggregate)("products").filter(items.filter().eq("availability", "in_stock")),
+      gender,
+    );
+    const { items: rows } = await agg.group("categorySlug").count().run();
     const map: Record<string, number> = {};
     for (const r of rows as any[]) {
       const slug = r._id?.categorySlug ?? r.categorySlug;
@@ -113,20 +119,23 @@ export interface ProductPage {
 }
 
 /**
- * Товари категорії — тільки in_stock, з пагінацією. Featured-бренди
- * піднімаємо вгору (сортуємо в пам'яті: у Wix Data немає join'а на бренд).
+ * Products in a category — in_stock only, paginated, gender-filtered.
+ * Featured brands float to the top (sorted in memory: Wix Data has no join
+ * onto the brand).
  */
 export async function getProductsByCategory(
   categorySlug: string,
   page = 1,
   pageSize = 24,
+  gender: GenderFilter = "all",
 ): Promise<ProductPage> {
   try {
     const featuredSlugs = new Set((await getBrands({ featuredOnly: true })).map((b) => b.slug));
-    const { items: results, totalCount } = await auth
+    const base = auth
       .elevate(items.query)("products")
       .eq("categorySlug", categorySlug)
-      .eq("availability", "in_stock")
+      .eq("availability", "in_stock");
+    const { items: results, totalCount } = await applyGender(base, gender)
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .find();
@@ -151,12 +160,10 @@ export async function getProductsByCategory(
   }
 }
 
-export async function getTotalInStock(): Promise<number> {
+export async function getTotalInStock(gender: GenderFilter = "all"): Promise<number> {
   try {
-    return await auth
-      .elevate(items.query)("products")
-      .eq("availability", "in_stock")
-      .count();
+    const base = auth.elevate(items.query)("products").eq("availability", "in_stock");
+    return await applyGender(base, gender).count();
   } catch {
     return 0;
   }

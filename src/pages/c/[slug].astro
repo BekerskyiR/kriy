@@ -1,11 +1,14 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import ProductCard from "../../components/ProductCard.astro";
-import { getCategories, getProductsByCategory } from "../../lib/catalog";
+import { getCategories, getProductsByCategory, type GenderFilter } from "../../lib/catalog";
 
 const { slug } = Astro.params;
 const pageParam = Number(Astro.url.searchParams.get("page") ?? "1");
 const page = Number.isFinite(pageParam) && pageParam > 0 ? Math.floor(pageParam) : 1;
+
+const gParam = Astro.url.searchParams.get("g");
+const gender: GenderFilter = gParam === "men" || gParam === "women" ? gParam : "all";
 
 const categories = await getCategories();
 const category = categories.find((c) => c.slug === slug);
@@ -14,15 +17,18 @@ if (!category) {
   return new Response(null, { status: 404, statusText: "Category not found" });
 }
 
-const { products, total, totalPages } = await getProductsByCategory(slug!, page, 24);
+const { products, total, totalPages } = await getProductsByCategory(slug!, page, 24, gender);
 const nf = new Intl.NumberFormat("uk-UA");
 
-const pageHref = (p: number) => `/c/${slug}?page=${p}`;
+// keep the active gender when paging
+const gQuery = gender === "all" ? "" : `&g=${gender}`;
+const pageHref = (p: number) => `/c/${slug}?page=${p}${gQuery}`;
 ---
 
 <Layout
   nav="catalog"
-  title={`${category.nameUk} — СВОЄ`}
+  gender={gender}
+  title={`${category.nameUk} — КРІЙ`}
   description={`${category.nameUk}: товари українських брендів. ${nf.format(total)} позицій у наявності.`}
 >
   <section class="section">
@@ -44,10 +50,15 @@ const pageHref = (p: number) => `/c/${slug}?page=${p}`;
           <div class="empty-state">
             <h3>Поки порожньо</h3>
             <p>
-              У цій категорії ще немає товарів у наявності. Загляни в інші розділи
-              або повернись пізніше — каталог оновлюється щодня.
+              {gender === "all"
+                ? "У цій категорії ще немає товарів у наявності. Загляни в інші розділи або повернись пізніше — каталог оновлюється щодня."
+                : "У цьому фільтрі поки немає товарів. Спробуй показати всі або іншу категорію."}
             </p>
-            <a class="btn btn--ghost" href="/">← До категорій</a>
+            {gender === "all" ? (
+              <a class="btn btn--ghost" href="/">← До категорій</a>
+            ) : (
+              <a class="btn btn--ghost" href={`/c/${slug}`}>Показати всі →</a>
+            )}
           </div>
         )
       }

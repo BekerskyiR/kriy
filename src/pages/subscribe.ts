@@ -3,12 +3,13 @@ import { redirects } from "@wix/redirects";
 import { auth } from "@wix/essentials";
 
 /**
- * Ініціює hosted checkout для pricing-plan і 302-редіректить на нього.
- * /checkout?planId=<id>
+ * Starts a hosted checkout for a pricing plan and 302-redirects to it.
+ * /subscribe?planId=<id>
  *
- * createRedirectSession повертає повний URL Wix-checkout'а; після оплати
- * Wix поверне користувача на postFlowUrl (сторінка успіху).
- * Elevate — щоб виклик працював у контексті анонімного visitor'а.
+ * createRedirectSession returns the full Wix checkout URL; after payment Wix
+ * sends the visitor back to postFlowUrl (the thank-you page). Elevated so the
+ * call works in an anonymous visitor context. Named /subscribe (not /checkout)
+ * to avoid colliding with @wix/astro's built-in payment-links /checkout route.
  */
 export const GET: APIRoute = async ({ url, redirect, request }) => {
   const planId = url.searchParams.get("planId");

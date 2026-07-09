@@ -2,14 +2,14 @@ import type { APIRoute } from "astro";
 import { items } from "@wix/data";
 import { auth } from "@wix/essentials";
 
-const APP = "svoye";
+const APP = "kriy";
 
 /**
- * Редіректор вихідних кліків: /out?b=<brandSlug>&u=<productUrl>
- *   1. інкрементує outboundClicks бренда (цінність для бренда в цифрах),
- *   2. додає UTM-мітку,
- *   3. 302 на сайт бренда.
- * Лічильник — best-effort: помилка не має завадити переходу.
+ * Outbound-click redirector: /out?b=<brandSlug>&u=<productUrl>
+ *   1. increments the brand's outboundClicks (the value we show brands),
+ *   2. appends a UTM tag,
+ *   3. 302 to the brand's site.
+ * The counter is best-effort: a failure must not block the redirect.
  */
 export const GET: APIRoute = async ({ url, redirect }) => {
   const brandSlug = url.searchParams.get("b") ?? "";

@@ -2,12 +2,12 @@ import type { RawProduct } from "../../types.js";
 import { parsePriceMinor } from "./price.js";
 
 /**
- * Shopify /products.json — публічний JSON-фід Shopify-магазинів.
- * Обраний основним для Shopify-брендів замість Atom, бо:
- *   - реальна наявність по варіантах (Atom стоків не віддає),
- *   - пагінація до 250 позицій на сторінку (Atom ігнорує ?page= і
- *     віддає лише останні 25 товарів).
- * Валюти у products.json немає — береться defaultCurrency бренду.
+ * Shopify /products.json — the public JSON feed of Shopify stores.
+ * Chosen as the primary source for Shopify brands over Atom because:
+ *   - real per-variant availability (Atom does not expose stock),
+ *   - pagination up to 250 items per page (Atom ignores ?page= and only
+ *     returns the latest 25 products).
+ * products.json has no currency, so the brand's defaultCurrency is used.
  */
 
 interface ShopifyVariant {

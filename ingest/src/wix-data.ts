@@ -3,15 +3,16 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 /**
- * Тонкий REST-клієнт до Wix Data v2.
+ * Thin REST client for Wix Data v2.
  *
- * Авторизація: WIX_SITE_TOKEN з env (для CI), інакше токен мінтиться
- * через Wix CLI (`npx wix token --site <id>`) — на дев-машині цього досить.
- * siteId читається з wix.config.json у корені репо.
+ * Auth: WIX_SITE_TOKEN from env (for CI), otherwise the token is minted via
+ * the Wix CLI (`npx wix token --site <id>`) — enough on a dev machine.
+ * siteId is read from wix.config.json at the repo root.
  */
 
 const API = "https://www.wixapis.com/wix-data/v2";
 const BULK_CHUNK = 1000;
+const PATCH_CHUNK = 100; // bulk patch caps at 100 items per call
 
 function resolveSiteId(): string {
   const config = JSON.parse(readFileSync(join(process.cwd(), "wix.config.json"), "utf8"));
@@ -43,7 +44,7 @@ async function call<T>(path: string, body: unknown): Promise<T> {
   });
   if (!res.ok) {
     const detail = await res.text();
-    throw new Error(`Wix Data ${path} → HTTP ${res.status}: ${detail.slice(0, 300)}`);
+    throw new Error(`Wix Data ${path} -> HTTP ${res.status}: ${detail.slice(0, 300)}`);
   }
   return res.json() as Promise<T>;
 }
@@ -53,7 +54,7 @@ export interface DataItem<T = Record<string, unknown>> {
   data: T & { _id: string };
 }
 
-/** Вичитує колекцію повністю, сторінками по 1000. */
+/** Read a whole collection, paging by 1000. */
 export async function queryAll<T = Record<string, unknown>>(
   collectionId: string,
   filter?: Record<string, unknown>,
@@ -93,7 +94,7 @@ export async function bulkInsert(
   return count;
 }
 
-/** Повна заміна data (id на рівні елемента, без _id всередині data). */
+/** Full replacement of data (id at the element level, no _id inside data). */
 export async function bulkUpdate(
   collectionId: string,
   items: Array<{ id: string; data: Record<string, unknown> }>,
@@ -109,13 +110,13 @@ export async function bulkUpdate(
   return count;
 }
 
-/** Частковий апдейт окремих полів — не чіпає решту запису. */
+/** Partial update of individual fields — leaves the rest of the record intact. */
 export async function bulkPatch(
   collectionId: string,
   patches: Array<{ id: string; set: Record<string, unknown> }>,
 ): Promise<number> {
   let count = 0;
-  for (const chunk of chunks(patches, BULK_CHUNK)) {
+  for (const chunk of chunks(patches, PATCH_CHUNK)) {
     const resp = await call<{ results?: unknown[] }>("/bulk/items/patch", {
       dataCollectionId: collectionId,
       patches: chunk.map(({ id, set }) => ({

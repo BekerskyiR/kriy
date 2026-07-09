@@ -2,15 +2,16 @@ import type { Brand, RawProduct } from "../types.js";
 import type { ProductSource } from "./source.js";
 
 /**
- * InstagramSource — Фаза 2, зараз лише контракт.
+ * InstagramSource — Phase 2, contract only for now.
  *
- * Принципова позиція: жодного скрапінгу Instagram. Дані беруться ВИКЛЮЧНО
- * через Instagram Graph API для акаунтів, які бренд сам підключив через
- * OAuth (потік "claim your profile": бренд один раз тисне "підключити IG"
- * на сторінці /for-brands і дає нам токен).
+ * Principled stance: no Instagram scraping. Data comes EXCLUSIVELY through the
+ * Instagram Graph API for accounts a brand connected itself via OAuth (the
+ * "claim your profile" flow: the brand clicks "connect IG" once on /for-brands
+ * and grants us a token).
  *
- * Вихід той самий — RawProduct[] → та сама нормалізація → та сама колекція
- * products із sourceType = "instagram". Пайплайн і фронт змін не потребують.
+ * Same output — RawProduct[] -> same normalization -> same products
+ * collection with sourceType = "instagram". Neither the pipeline nor the
+ * frontend needs any change.
  */
 export class InstagramSource implements ProductSource {
   readonly sourceType = "instagram" as const;
@@ -28,9 +29,9 @@ export class InstagramSource implements ProductSource {
 }
 
 /**
- * TODO(Phase 2): пости IG не мають структурованої ціни/розміру.
- * Сюди піде парсинг підпису (ціна/розміри з тексту) і, опційно, OCR
- * по зображенню. Повертає часткові поля RawProduct.
+ * TODO(Phase 2): IG posts carry no structured price/size. This is where
+ * caption parsing (price/sizes from text) and optionally image OCR will go.
+ * Returns a partial RawProduct.
  */
 export function extractStructuredData(_post: unknown): Partial<RawProduct> {
   return {};

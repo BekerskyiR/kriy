@@ -6,15 +6,15 @@ import type { Brand, CategoryMappingRule, IngestBrandResult, RawProduct } from "
 import { bulkInsert, bulkPatch, bulkUpdate, queryAll } from "./wix-data.js";
 
 /**
- * Ядро інжесту. Один прохід по бренду:
- *   1. джерело → RawProduct[]
- *   2. мапінг категорій (немапнуте → unmappedCategories)
- *   3. upsert у products по sourceKey = brand:sourceType:externalId
- *   4. товари, що зникли з фіду, → out_of_stock
+ * Ingest core. One pass per brand:
+ *   1. source -> RawProduct[]
+ *   2. category mapping (unmapped -> unmappedCategories)
+ *   3. upsert into products by sourceKey = brand:sourceType:externalId
+ *   4. products that disappeared from the feed -> out_of_stock
  *
- * Помилка одного бренду не роняє прохід. Stale-маркування виконується
- * ТІЛЬКИ для брендів, чий фід успішно оброблено, — інакше один мертвий
- * фід помилково "гасив" би весь асортимент бренду.
+ * A single brand's failure does not fail the whole pass. Stale-marking runs
+ * ONLY for brands whose feed was processed successfully — otherwise one dead
+ * feed would wrongly "kill" a brand's entire catalog.
  */
 
 const SOURCES: ProductSource[] = [new FeedSource(), new InstagramSource()];
@@ -60,6 +60,7 @@ async function ingestOneBrand(brand: Brand, mapper: CategoryMapper): Promise<Ing
     result.fetched = rawProducts.length;
     if (rawProducts.length === 0) throw new Error("Feed returned 0 products — skipping upsert");
 
+    const g = brand.gender ?? "unisex";
     const now = Date.now();
     const existing = await queryAll<{ sourceKey: string }>("products", { brandSlug: brand.slug });
     const existingIdByKey = new Map(existing.map((e) => [e.sourceKey, e._id]));
@@ -71,7 +72,7 @@ async function ingestOneBrand(brand: Brand, mapper: CategoryMapper): Promise<Ing
 
     for (const p of rawProducts) {
       const key = sourceKeyOf(brand, p);
-      if (seenKeys.has(key)) continue; // дублікати всередині фіду
+      if (seenKeys.has(key)) continue; // duplicates within the feed
       seenKeys.add(key);
 
       const categorySlug = mapper.resolve(brand.slug, p.rawCategory);
@@ -98,7 +99,9 @@ async function ingestOneBrand(brand: Brand, mapper: CategoryMapper): Promise<Ing
         productUrl: p.productUrl,
         rawCategory: p.rawCategory,
         categorySlug,
-        gender: null,
+        gender: g,
+        forMen: g === "men" || g === "unisex",
+        forWomen: g === "women" || g === "unisex",
         lastSeenAt: now,
       };
 
@@ -110,7 +113,7 @@ async function ingestOneBrand(brand: Brand, mapper: CategoryMapper): Promise<Ing
     result.inserted = inserts.length ? await bulkInsert("products", inserts) : 0;
     result.updated = updates.length ? await bulkUpdate("products", updates) : 0;
 
-    // stale: були в CMS, але зникли з цього (успішного!) проходу фіду
+    // stale: present in CMS but missing from this (successful!) feed pass
     const staleIds = existing
       .filter((e) => !seenKeys.has(e.sourceKey))
       .map((e) => e._id);
@@ -130,7 +133,7 @@ async function ingestOneBrand(brand: Brand, mapper: CategoryMapper): Promise<Ing
   return result;
 }
 
-/** Немапнуті категорії — в окрему колекцію, щоб домапувати вручну. */
+/** Log unmapped categories into a dedicated collection for manual mapping. */
 async function logUnmapped(
   brandSlug: string,
   unmapped: Map<string, { count: number; example: string }>,

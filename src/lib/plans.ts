@@ -2,14 +2,14 @@ import { plans } from "@wix/pricing-plans";
 import { auth } from "@wix/essentials";
 
 /**
- * Публічні pricing-plans для сторінки «Для брендів».
- * Elevate — щоб анонімний visitor гарантовано бачив публічні плани.
+ * Public pricing plans for the /for-brands page.
+ * Elevated so an anonymous visitor reliably sees the public plans.
  */
 export interface FeaturedPlan {
   _id: string;
   name: string;
   description?: string;
-  priceText: string; // "29 EUR / міс"
+  priceText: string; // UI string, e.g. "29 EUR / міс"
   perks: string[];
 }
 

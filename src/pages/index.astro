@@ -1,16 +1,19 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import { getCategories, getCategoryCounts, getBrands, getTotalInStock } from "../lib/catalog";
+import { getCategories, getCategoryCounts, getBrands, getTotalInStock, type GenderFilter } from "../lib/catalog";
+
+const gParam = Astro.url.searchParams.get("g");
+const gender: GenderFilter = gParam === "men" || gParam === "women" ? gParam : "all";
 
 const [categories, counts, featured, allBrands, total] = await Promise.all([
   getCategories(),
-  getCategoryCounts(),
+  getCategoryCounts(gender),
   getBrands({ featuredOnly: true }),
   getBrands(),
-  getTotalInStock(),
+  getTotalInStock(gender),
 ]);
 
-// показуємо тільки категорії верхнього рівня, у яких є товари
+// show only top-level categories that actually have products
 const topCategories = categories
   .filter((c) => !c.parentSlug)
   .map((c) => ({ ...c, count: counts[c.slug] ?? 0 }))
@@ -19,10 +22,10 @@ const topCategories = categories
 const nf = new Intl.NumberFormat("uk-UA");
 ---
 
-<Layout nav="catalog">
+<Layout nav="catalog" gender={gender}>
   <section class="hero">
     <div class="container">
-      <h1>Знайди сво<span class="ye">є</span>.</h1>
+      <h1>Знайди свій <span class="ye">крій</span>.</h1>
       <p class="hero__lede">
         Одяг українських брендів — зібраний по категоріях в одному місці.
         Обирай, порівнюй, переходь і купуй напряму в бренда.

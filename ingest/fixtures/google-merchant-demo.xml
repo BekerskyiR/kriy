@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Демо-фікстура формату Google Merchant / RSS 2.0 для тестів парсера -->
+<!-- Demo fixture of the Google Merchant / RSS 2.0 format for parser tests.
+     Product data is intentionally Ukrainian to mirror real feeds. -->
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
     <title>Demo Merchant Brand</title>

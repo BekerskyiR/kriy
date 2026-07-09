@@ -1,15 +1,15 @@
 import type { Brand, RawProduct } from "../types.js";
 
 /**
- * Абстракція джерела товарів — ключовий контракт архітектури.
+ * Product source abstraction — the key architectural contract.
  *
- * Решта застосунку (пайплайн, CMS, фронт) бачить тільки RawProduct[].
- * Додавання нового джерела = нова імплементація цього інтерфейсу,
- * жодних змін у пайплайні, API чи фронтенді.
+ * The rest of the app (pipeline, CMS, frontend) only ever sees RawProduct[].
+ * Adding a new source = a new implementation of this interface, with no
+ * changes to the pipeline, API, or frontend.
  */
 export interface ProductSource {
   readonly sourceType: "feed" | "instagram";
-  /** Чи вміє це джерело обслужити цей бренд. */
+  /** Whether this source can serve the given brand. */
   supports(brand: Brand): boolean;
   fetchProducts(brand: Brand): Promise<RawProduct[]>;
 }

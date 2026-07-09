@@ -9,22 +9,22 @@ const [plan, brands, total] = await Promise.all([
   getTotalInStock(),
 ]);
 
-// сумарні переходи, які вітрина вже привела брендам — головний аргумент пітчу
+// total outbound clicks the showcase has already sent brands — the core pitch
 const totalClicks = brands.reduce((sum, b) => sum + (b.outboundClicks ?? 0), 0);
 const nf = new Intl.NumberFormat("uk-UA");
 ---
 
 <Layout
   nav="brands"
-  title="Для брендів — СВОЄ"
-  description="Розмістіть свій бренд у вітрині СВОЄ і отримуйте переходи цільових покупців напряму на ваш сайт."
+  title="Для брендів — КРІЙ"
+  description="Розмістіть свій бренд у вітрині КРІЙ і отримуйте переходи цільових покупців напряму на ваш сайт."
 >
   <section class="section">
     <div class="container pitch">
       <span class="eyebrow">Для брендів</span>
       <h1>Ваш одяг там, де його шукають.</h1>
       <p class="pitch__lede">
-        СВОЄ збирає товари українських брендів по категоріях і веде покупця
+        КРІЙ збирає товари українських брендів по категоріях і веде покупця
         напряму до вас — без комісій з продажу й без посередництва в оплаті.
         Ми вітрина, ви — магазин.
       </p>

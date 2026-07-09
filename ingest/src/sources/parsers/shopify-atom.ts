@@ -3,15 +3,15 @@ import type { RawProduct } from "../../types.js";
 import { parsePriceMinor } from "./price.js";
 
 /**
- * Shopify Atom (/collections/all.atom) — публічний фід Shopify-магазинів.
- * Містить title, s:type (сира категорія), s:variant/s:price@currency,
- * посилання на товар і зображення всередині CDATA-таблиці summary.
+ * Shopify Atom (/collections/all.atom) — the public feed of Shopify stores.
+ * Contains title, s:type (raw category), s:variant/s:price@currency, a product
+ * link, and images inside the CDATA table of the summary field.
  */
 
 const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: "@_",
-  // одиночний <entry> має лишатися масивом
+  // a single <entry> must stay an array
   isArray: (name) => name === "entry" || name === "s:variant",
 });
 
@@ -26,11 +26,11 @@ function stripHtml(html: string): string {
 
 function extractImages(summaryHtml: string): string[] {
   const urls = [...summaryHtml.matchAll(/<img[^>]+src="([^"]+)"/g)].map((m) => m[1]);
-  // прибираємо дублікати, нормалізуємо protocol-relative URL
+  // dedupe, normalize protocol-relative URLs
   return [...new Set(urls)].map((u) => (u.startsWith("//") ? `https:${u}` : u));
 }
 
-/** Опис у summary йде після службової таблиці Vendor/Type/Price — відрізаємо її. */
+/** Description in summary follows the service Vendor/Type/Price table — cut it off. */
 function extractDescription(summaryHtml: string): string {
   const afterTable = summaryHtml.split(/<\/tr>\s*<tr>/)[1] ?? summaryHtml;
   return stripHtml(afterTable).slice(0, 500);
@@ -70,8 +70,9 @@ export function parseShopifyAtom(xml: string): RawProduct[] {
       description: extractDescription(summaryHtml),
       priceMinor,
       currency,
-      // Atom-фід не віддає стоки: товар присутній у фіді → вважаємо in_stock,
-      // зникнення з фіду ловить stale-маркування пайплайна.
+      // Atom feed does not expose stock: a product present in the feed is
+      // treated as in_stock; disappearance from the feed is caught by the
+      // pipeline's stale-marking pass.
       availability: "in_stock",
       images: extractImages(summaryHtml),
       productUrl,

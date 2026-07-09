@@ -1,8 +1,8 @@
 /* ============================================================
-   СВОЄ — дизайн-система
-   Концепція: «червона нитка». Інтерфейс говорить мовою швейного
-   виробництва: картки-бирки, пунктирні стібки, маркування в моно.
-   Палітра: холодний папір / чорнильний індиго / нитка-кармін.
+   KRIY — design system
+   Concept: "the red thread". The UI speaks the language of garment making:
+   tag-style cards, dashed stitches, mono labels.
+   Palette: cold paper / ink indigo / carmine thread.
    ============================================================ */
 
 @import url("https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap&subset=cyrillic");
@@ -13,9 +13,9 @@
   --text: #131a26;
   --text-soft: #4d5866;
   --line: #d8dce1;
-  --accent: #c8102e; /* червона нитка */
+  --accent: #c8102e; /* red thread */
   --accent-dark: #9a0c23;
-  --indigo: #33527a; /* денім */
+  --indigo: #33527a; /* denim */
 
   --font-display: "Unbounded", system-ui, sans-serif;
   --font-body: "IBM Plex Sans", system-ui, sans-serif;
@@ -24,7 +24,7 @@
   --container: 1200px;
   --gap: clamp(1rem, 2.5vw, 2rem);
 
-  /* пунктирний стібок — наскрізний графічний мотив */
+  /* dashed stitch — the recurring graphic motif */
   --stitch: repeating-linear-gradient(
     to right,
     var(--accent) 0 10px,
@@ -50,7 +50,7 @@ body {
   font-family: var(--font-body);
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden; /* дисплейні заголовки ніколи не дають горизонтальний скрол */
+  overflow-x: hidden; /* display headings never cause horizontal scroll */
 }
 
 h1,
@@ -83,7 +83,7 @@ img {
   padding-inline: var(--gap);
 }
 
-/* ---------- стібок-роздільник ---------- */
+/* ---------- stitch divider ---------- */
 .stitch {
   height: 2px;
   background: var(--stitch);
@@ -108,7 +108,7 @@ img {
   }
 }
 
-/* ---------- шапка ---------- */
+/* ---------- header ---------- */
 .site-header {
   position: sticky;
   top: 0;
@@ -160,7 +160,58 @@ img {
   border-bottom-color: var(--accent);
 }
 
-/* ---------- герой ---------- */
+/* ---------- gender strip ---------- */
+.gender-strip {
+  border-bottom: 1px solid var(--line);
+  background: var(--card);
+}
+
+.gender-strip__inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-block: 0.6rem;
+}
+
+.gender-strip__label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-soft);
+}
+
+.gender-switch {
+  display: inline-flex;
+  gap: 0.3rem;
+  background: var(--ground);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.2rem;
+}
+
+.gender-switch__tab {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  color: var(--text-soft);
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.gender-switch__tab:hover {
+  color: var(--text);
+}
+
+.gender-switch__tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ---------- hero ---------- */
 .hero {
   padding-block: clamp(3rem, 8vw, 6.5rem) clamp(2.5rem, 6vw, 5rem);
 }
@@ -198,7 +249,7 @@ img {
   font-weight: 500;
 }
 
-/* ---------- секції ---------- */
+/* ---------- sections ---------- */
 .section {
   padding-block: clamp(2.5rem, 6vw, 4.5rem);
 }
@@ -222,7 +273,7 @@ img {
   white-space: nowrap;
 }
 
-/* ---------- індекс категорій (типографічний список) ---------- */
+/* ---------- category index (typographic list) ---------- */
 .cat-index {
   list-style: none;
   margin: 0;
@@ -249,7 +300,7 @@ img {
   font-size: clamp(1.15rem, 3vw, 1.8rem);
 }
 
-/* порядковий номер — фіксована колонка зліва (моно, щоб цифри не стрибали) */
+/* ordinal number — fixed left column (mono so digits don't jitter) */
 .cat-index .idx {
   font-family: var(--font-mono);
   font-size: 0.82rem;
@@ -258,7 +309,7 @@ img {
   flex-shrink: 0;
 }
 
-/* лічильник товарів — притиснутий до правого краю */
+/* product counter — pinned to the right edge */
 .cat-index .count-n {
   font-family: var(--font-mono);
   font-size: 0.82rem;
@@ -290,10 +341,10 @@ img {
   }
 }
 
-/* ---------- сітка товарів: картки-бирки ---------- */
+/* ---------- product grid: tag cards ---------- */
 .product-grid {
   display: grid;
-  /* мобільний: рівно 2 колонки (1fr сам враховує gap — жодного overflow) */
+  /* mobile: exactly 2 columns (1fr accounts for gap — no overflow) */
   grid-template-columns: repeat(2, 1fr);
   gap: var(--gap);
 }
@@ -316,7 +367,7 @@ img {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* пробитий отвір бирки */
+/* punched hole of the tag */
 .tag-card::before {
   content: "";
   position: absolute;
@@ -397,7 +448,7 @@ img {
   color: var(--accent);
 }
 
-/* ---------- стрічка брендів ---------- */
+/* ---------- brand strip ---------- */
 .brand-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
@@ -458,7 +509,7 @@ img {
   color: var(--accent);
 }
 
-/* ---------- кнопки ---------- */
+/* ---------- buttons ---------- */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -495,7 +546,7 @@ img {
   color: var(--accent);
 }
 
-/* ---------- пагінація ---------- */
+/* ---------- pagination ---------- */
 .pagination {
   display: flex;
   align-items: center;
@@ -524,7 +575,7 @@ img {
   pointer-events: none;
 }
 
-/* ---------- хлібні крихти / ярлик сторінки ---------- */
+/* ---------- breadcrumbs / page eyebrow ---------- */
 .eyebrow {
   font-family: var(--font-mono);
   font-size: 0.78rem;
@@ -544,7 +595,7 @@ img {
   color: var(--accent);
 }
 
-/* ---------- порожній стан ---------- */
+/* ---------- empty state ---------- */
 .empty-state {
   text-align: center;
   padding: clamp(3rem, 8vw, 5rem) var(--gap);
@@ -559,7 +610,7 @@ img {
   margin: 0.5rem auto 1.4rem;
 }
 
-/* ---------- футер ---------- */
+/* ---------- footer ---------- */
 .site-footer {
   border-top: 1px solid var(--line);
   margin-top: clamp(2rem, 6vw, 4rem);
@@ -583,7 +634,7 @@ img {
   color: var(--accent);
 }
 
-/* ---------- для брендів ---------- */
+/* ---------- for brands ---------- */
 .pitch {
   max-width: 46rem;
 }
@@ -671,7 +722,7 @@ img {
   flex-shrink: 0;
 }
 
-/* весь текст кроку — один flex-елемент, щоб inline <strong> не отримував gap */
+/* whole step text is one flex item so an inline <strong> doesn't get gap */
 .steps li > span {
   flex: 1;
 }

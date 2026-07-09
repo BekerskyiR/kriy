@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Демо-фікстура формату YML (Prom.ua / Хорошоп) для тестів парсера -->
+<!-- Demo fixture of the YML format (Prom.ua / Horoshop) for parser tests.
+     Product data is intentionally Ukrainian to mirror real feeds. -->
 <yml_catalog date="2026-07-09 10:00">
   <shop>
     <name>demo-brand</name>

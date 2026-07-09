@@ -7,9 +7,9 @@ interface Props {
 const { product } = Astro.props;
 const img = resolveImage(product.mainImage, 500, 667);
 
-// Вихідне посилання на сайт бренда з UTM-міткою. Клік проходить через
-// /out — редіректор, що інкрементує лічильник переходів бренда, а тоді
-// віддає користувача на productUrl (див. src/pages/out.ts).
+// Outbound link to the brand's site with a UTM tag. The click goes through
+// /out — a redirector that increments the brand's click counter and then
+// sends the user to productUrl (see src/pages/out.ts).
 const out = `/out?b=${encodeURIComponent(product.brandSlug)}&u=${encodeURIComponent(product.productUrl)}`;
 ---
 

@@ -1,8 +1,8 @@
 import { ingestBrands } from "./pipeline.js";
 
 /**
- * CLI інжесту:
- *   npm run ingest             — усі активні бренди
+ * Ingest CLI:
+ *   npm run ingest             — all active brands
  *   npm run ingest -- --brand keepstyle
  */
 async function main() {
@@ -17,12 +17,12 @@ async function main() {
   for (const r of results) {
     if (r.ok) {
       console.log(
-        `  ✓ ${r.brandSlug}: fetched ${r.fetched}, +${r.inserted} new, ~${r.updated} updated, ${r.markedOutOfStock} → out_of_stock` +
+        `  ok ${r.brandSlug}: fetched ${r.fetched}, +${r.inserted} new, ~${r.updated} updated, ${r.markedOutOfStock} -> out_of_stock` +
           (r.unmappedCategories.length ? `, unmapped: [${r.unmappedCategories.join(", ")}]` : ""),
       );
     } else {
       failed += 1;
-      console.error(`  ✗ ${r.brandSlug}: ${r.error}`);
+      console.error(`  FAIL ${r.brandSlug}: ${r.error}`);
     }
   }
   console.log(`[ingest] done: ${results.length - failed}/${results.length} brands ok`);

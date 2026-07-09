@@ -1,8 +1,9 @@
 import { bulkInsert, queryAll } from "./wix-data.js";
 
 /**
- * Разовий адмін-скрипт: домапування сирих категорій, знайдених у
- * unmappedCategories після перших проходів інжесту.
+ * One-off admin script: map raw categories discovered in unmappedCategories
+ * after the first ingest passes. Keys are the real (often Ukrainian) product_type
+ * strings from brand feeds — data, matched verbatim against the feeds.
  *   npx tsx ingest/src/add-mappings.ts
  */
 const NEW_RULES: Record<string, string> = {

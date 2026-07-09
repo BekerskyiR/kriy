@@ -5,12 +5,24 @@ interface Props {
   title?: string;
   description?: string;
   nav?: "catalog" | "brands" | null;
+  /** When set, renders the men/women/all strip under the header. */
+  gender?: "all" | "men" | "women";
 }
 const {
-  title = "СВОЄ — каталог українських брендів одягу",
-  description = "Вітрина українських брендів одягу. Обери категорію — знайди своє, купуй напряму в бренда.",
+  title = "КРІЙ — каталог українських брендів одягу",
+  description = "Вітрина українських брендів одягу. Обери категорію — знайди свій крій, купуй напряму в бренда.",
   nav = null,
+  gender,
 } = Astro.props;
+
+// gender switch keeps the current path, drops paging (a new gender = page 1)
+const path = Astro.url.pathname;
+const genderHref = (g: "all" | "men" | "women") => (g === "all" ? path : `${path}?g=${g}`);
+const genderTabs: Array<{ key: "all" | "men" | "women"; label: string }> = [
+  { key: "all", label: "Усі" },
+  { key: "women", label: "Жіноче" },
+  { key: "men", label: "Чоловіче" },
+];
 ---
 
 <!doctype html>
@@ -26,7 +38,7 @@ const {
   <body>
     <header class="site-header">
       <div class="container site-header__inner">
-        <a class="wordmark" href="/">СВО<span class="ye">Є</span></a>
+        <a class="wordmark" href="/">КРІ<span class="ye">Й</span></a>
         <nav class="site-nav" aria-label="Головна навігація">
           <a href="/" aria-current={nav === "catalog" ? "page" : undefined}>Каталог</a>
           <a href="/for-brands" aria-current={nav === "brands" ? "page" : undefined}
@@ -36,6 +48,27 @@ const {
       </div>
     </header>
 
+    {
+      gender && (
+        <div class="gender-strip">
+          <div class="container gender-strip__inner">
+            <span class="gender-strip__label">Показувати:</span>
+            <nav class="gender-switch" aria-label="Стать">
+              {genderTabs.map((t) => (
+                <a
+                  href={genderHref(t.key)}
+                  class:list={["gender-switch__tab", { active: gender === t.key }]}
+                  aria-current={gender === t.key ? "true" : undefined}
+                >
+                  {t.label}
+                </a>
+              ))}
+            </nav>
+          </div>
+        </div>
+      )
+    }
+
     <main>
       <slot />
     </main>
@@ -43,7 +76,7 @@ const {
     <footer class="site-footer">
       <div class="container site-footer__inner">
         <div>
-          <strong>СВОЄ</strong> — вітрина, а не магазин. Купівля відбувається на сайті бренда.
+          <strong>КРІЙ</strong> — вітрина, а не магазин. Купівля відбувається на сайті бренда.
         </div>
         <div>
           <a href="/for-brands">Додати свій бренд →</a>
