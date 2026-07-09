@@ -562,7 +562,11 @@ img {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.2s ease;
+  will-change: transform;
 }
 
 /* punched hole of the tag */
@@ -579,21 +583,84 @@ img {
   z-index: 2;
 }
 
-.tag-card:hover {
-  border-color: var(--text);
-  box-shadow: 0 4px 18px rgb(19 26 38 / 0.09);
+/* lift + subtle scale + layered shadow — gives the card real depth on hover */
+.tag-card:hover,
+.tag-card:focus-visible {
+  transform: translateY(-6px) scale(1.02);
+  border-color: color-mix(in srgb, var(--line) 50%, transparent);
+  box-shadow:
+    0 1px 2px rgb(19 26 38 / 0.04),
+    0 6px 12px rgb(19 26 38 / 0.07),
+    0 16px 32px rgb(19 26 38 / 0.12),
+    0 28px 50px rgb(19 26 38 / 0.10);
+  z-index: 3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tag-card {
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+  .tag-card:hover,
+  .tag-card:focus-visible {
+    transform: none;
+  }
 }
 
 .tag-card__img {
+  position: relative;
   aspect-ratio: 3 / 4;
   background: #e7eaee;
   overflow: hidden;
+}
+
+/* animated skeleton shimmer shown until the image finishes loading */
+.tag-card__img::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 25%,
+    color-mix(in srgb, #ffffff 55%, transparent) 50%,
+    transparent 75%
+  );
+  background-size: 220% 100%;
+  animation: skeleton-shimmer 1.3s ease-in-out infinite;
+}
+
+/* once loaded (or no image), stop the shimmer and fade the photo in */
+.tag-card__img.loaded::after {
+  display: none;
 }
 
 .tag-card__img img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.tag-card__img.loaded img {
+  opacity: 1;
+}
+
+@keyframes skeleton-shimmer {
+  from {
+    background-position: 220% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tag-card__img::after {
+    animation: none;
+  }
+  .tag-card__img img {
+    transition: none;
+  }
 }
 
 .tag-card__body {

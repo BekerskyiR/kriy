@@ -130,5 +130,20 @@ const langHref = (loc: Locale) => `/set-lang?to=${loc}&back=${encodeURIComponent
         });
       })();
     </script>
+
+    <script is:inline>
+      // Image skeletons: keep the shimmer on each product photo box until its
+      // image loads (or errors, or there's no image), then reveal it.
+      (() => {
+        const done = (box) => box && box.classList.add("loaded");
+        document.querySelectorAll(".tag-card__img").forEach((box) => {
+          const img = box.querySelector("img");
+          if (!img) return done(box);                    // no photo → no shimmer
+          if (img.complete && img.naturalWidth > 0) return done(box); // cached
+          img.addEventListener("load", () => done(box));
+          img.addEventListener("error", () => done(box));
+        });
+      })();
+    </script>
   </body>
 </html>
