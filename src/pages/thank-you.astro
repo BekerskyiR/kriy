@@ -1,24 +1,26 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { getLocale, useT } from "../lib/i18n";
+
+const locale = getLocale(Astro.cookies);
+const t = useT(locale);
 ---
 
 <Layout
   nav="brands"
-  title="Дякуємо — КРІЙ"
-  description="Оплату отримано. Ваш бренд стає featured у вітрині КРІЙ."
+  title={locale === "en" ? "Thank you — KRIY" : "Дякуємо — КРІЙ"}
+  description={locale === "en"
+    ? "Payment received. Your brand is now featured in the KRIY showcase."
+    : "Оплату отримано. Ваш бренд стає featured у вітрині КРІЙ."}
 >
   <section class="section">
     <div class="container pitch">
-      <span class="eyebrow">Оплата отримана</span>
-      <h1>Вітаємо у вітрині ✦</h1>
-      <p class="pitch__lede">
-        Дякуємо! Ваш бренд стає <strong>featured</strong> — з'явиться у блоці
-        «Обрані бренди» на головній, а товари піднімуться вгору в категоріях.
-        Зміни застосуються протягом кількох хвилин після синхронізації.
-      </p>
+      <span class="eyebrow">{t("thanks.eyebrow")}</span>
+      <h1>{t("thanks.title")}</h1>
+      <p class="pitch__lede">{t("thanks.lede")}</p>
       <div style="margin-top:2rem; display:flex; gap:1rem; flex-wrap:wrap;">
-        <a class="btn btn--primary" href="/">До каталогу →</a>
-        <a class="btn btn--ghost" href="/for-brands">Назад до тарифу</a>
+        <a class="btn btn--primary" href="/">{t("thanks.toCatalog")}</a>
+        <a class="btn btn--ghost" href="/for-brands">{t("thanks.backToPlan")}</a>
       </div>
     </div>
   </section>

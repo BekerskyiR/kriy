@@ -1,10 +1,12 @@
 ---
 import { formatPrice, resolveImage, type Product } from "../lib/catalog";
+import { getLocale, useT } from "../lib/i18n";
 
 interface Props {
   product: Product;
 }
 const { product } = Astro.props;
+const t = useT(getLocale(Astro.cookies));
 const img = resolveImage(product.mainImage, 500, 667);
 
 // Outbound link to the brand's site with a UTM tag. The click goes through
@@ -25,6 +27,6 @@ const out = `/out?b=${encodeURIComponent(product.brandSlug)}&u=${encodeURICompon
     <span class="tag-card__brand">{product.brandName}</span>
     <span class="tag-card__title">{product.title}</span>
     <span class="tag-card__price">{formatPrice(product.priceMinor, product.currency)}</span>
-    <span class="tag-card__out">до бренда →</span>
+    <span class="tag-card__out">{t("card.toBrand")}</span>
   </div>
 </a>

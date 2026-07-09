@@ -14,6 +14,7 @@ export interface Category {
   _id: string;
   slug: string;
   nameUk: string;
+  nameEn?: string;
   parentSlug?: string | null;
   sortOrder: number;
 }
@@ -25,8 +26,19 @@ export interface Brand {
   siteUrl: string;
   instagramHandle?: string | null;
   description?: string;
+  descriptionEn?: string;
   isFeatured: boolean;
   outboundClicks?: number;
+}
+
+/** Localized category name (falls back to Ukrainian). */
+export function catName(c: Category, locale: "uk" | "en"): string {
+  return locale === "en" ? (c.nameEn ?? c.nameUk) : c.nameUk;
+}
+
+/** Localized brand description (falls back to Ukrainian). */
+export function brandDesc(b: Brand, locale: "uk" | "en"): string {
+  return locale === "en" ? (b.descriptionEn ?? b.description ?? "") : (b.description ?? "");
 }
 
 export interface Product {

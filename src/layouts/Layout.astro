@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { getLocale, useT, type Locale } from "../lib/i18n";
 
 interface Props {
   title?: string;
@@ -8,42 +9,52 @@ interface Props {
   /** When set, renders the men/women/all strip under the header. */
   gender?: "all" | "men" | "women";
 }
-const {
-  title = "КРІЙ — каталог українських брендів одягу",
-  description = "Вітрина українських брендів одягу. Обери категорію — знайди свій крій, купуй напряму в бренда.",
-  nav = null,
-  gender,
-} = Astro.props;
+const { title, description, nav = null, gender } = Astro.props;
+
+const locale = getLocale(Astro.cookies);
+const t = useT(locale);
+
+const pageTitle = title ?? (locale === "en" ? "KRIY — catalog of Ukrainian clothing brands" : "КРІЙ — каталог українських брендів одягу");
+const pageDesc = description ?? (locale === "en"
+  ? "A showcase of Ukrainian clothing brands. Pick a category, find your fit, buy straight from the brand."
+  : "Вітрина українських брендів одягу. Обери категорію — знайди свій крій, купуй напряму в бренда.");
 
 // gender switch keeps the current path, drops paging (a new gender = page 1)
 const path = Astro.url.pathname;
 const genderHref = (g: "all" | "men" | "women") => (g === "all" ? path : `${path}?g=${g}`);
-const genderTabs: Array<{ key: "all" | "men" | "women"; label: string }> = [
-  { key: "all", label: "Усі" },
-  { key: "women", label: "Жіноче" },
-  { key: "men", label: "Чоловіче" },
+const genderTabs: Array<{ key: "all" | "men" | "women"; tkey: "gender.all" | "gender.women" | "gender.men" }> = [
+  { key: "all", tkey: "gender.all" },
+  { key: "women", tkey: "gender.women" },
+  { key: "men", tkey: "gender.men" },
 ];
+
+// language switch preserves the current path (+ query) as the return target
+const backTarget = path + Astro.url.search;
+const otherLocale: Locale = locale === "en" ? "uk" : "en";
+const langHref = (loc: Locale) => `/set-lang?to=${loc}&back=${encodeURIComponent(backTarget)}`;
 ---
 
 <!doctype html>
-<html lang="uk">
+<html lang={locale}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
-    <meta name="description" content={description} />
-    <title>{title}</title>
+    <meta name="description" content={pageDesc} />
+    <title>{pageTitle}</title>
   </head>
   <body>
     <header class="site-header">
       <div class="container site-header__inner">
         <a class="wordmark" href="/">КРІ<span class="ye">Й</span></a>
-        <nav class="site-nav" aria-label="Головна навігація">
-          <a href="/" aria-current={nav === "catalog" ? "page" : undefined}>Каталог</a>
-          <a href="/for-brands" aria-current={nav === "brands" ? "page" : undefined}
-            >Для брендів</a
-          >
+        <nav class="site-nav" aria-label="Main navigation">
+          <a href="/" aria-current={nav === "catalog" ? "page" : undefined}>{t("nav.catalog")}</a>
+          <a href="/for-brands" aria-current={nav === "brands" ? "page" : undefined}>{t("nav.brands")}</a>
+          <span class="lang-switch">
+            <span class="lang-switch__current">{locale.toUpperCase()}</span>
+            <a href={langHref(otherLocale)} class="lang-switch__other">{otherLocale.toUpperCase()}</a>
+          </span>
         </nav>
       </div>
     </header>
@@ -52,15 +63,15 @@ const genderTabs: Array<{ key: "all" | "men" | "women"; label: string }> = [
       gender && (
         <div class="gender-strip">
           <div class="container gender-strip__inner">
-            <span class="gender-strip__label">Показувати:</span>
-            <nav class="gender-switch" aria-label="Стать">
-              {genderTabs.map((t) => (
+            <span class="gender-strip__label">{t("gender.label")}</span>
+            <nav class="gender-switch" aria-label="Gender">
+              {genderTabs.map((tab) => (
                 <a
-                  href={genderHref(t.key)}
-                  class:list={["gender-switch__tab", { active: gender === t.key }]}
-                  aria-current={gender === t.key ? "true" : undefined}
+                  href={genderHref(tab.key)}
+                  class:list={["gender-switch__tab", { active: gender === tab.key }]}
+                  aria-current={gender === tab.key ? "true" : undefined}
                 >
-                  {t.label}
+                  {t(tab.tkey)}
                 </a>
               ))}
             </nav>
@@ -75,11 +86,9 @@ const genderTabs: Array<{ key: "all" | "men" | "women"; label: string }> = [
 
     <footer class="site-footer">
       <div class="container site-footer__inner">
+        <div set:html={t("footer.tagline").replace("KRIY", "<strong>KRIY</strong>").replace("КРІЙ", "<strong>КРІЙ</strong>")} />
         <div>
-          <strong>КРІЙ</strong> — вітрина, а не магазин. Купівля відбувається на сайті бренда.
-        </div>
-        <div>
-          <a href="/for-brands">Додати свій бренд →</a>
+          <a href="/for-brands">{t("footer.addBrand")}</a>
         </div>
       </div>
     </footer>

@@ -160,6 +160,28 @@ img {
   border-bottom-color: var(--accent);
 }
 
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding-left: 0.4rem;
+  border-left: 1px solid var(--line);
+}
+
+.lang-switch__current {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.lang-switch__other {
+  color: var(--text-soft);
+  text-decoration: none;
+}
+
+.lang-switch__other:hover {
+  color: var(--accent);
+}
+
 /* ---------- gender strip ---------- */
 .gender-strip {
   border-bottom: 1px solid var(--line);

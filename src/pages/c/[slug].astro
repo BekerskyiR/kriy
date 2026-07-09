@@ -5,8 +5,13 @@ import {
   getCategories,
   getProductsByCategory,
   getBrandsInCategory,
+  catName,
   type GenderFilter,
 } from "../../lib/catalog";
+import { getLocale, useT } from "../../lib/i18n";
+
+const locale = getLocale(Astro.cookies);
+const t = useT(locale);
 
 const { slug } = Astro.params;
 const pageParam = Number(Astro.url.searchParams.get("page") ?? "1");
@@ -34,7 +39,8 @@ const { products, total, totalPages } = await getProductsByCategory(
   gender,
   activeBrand,
 );
-const nf = new Intl.NumberFormat("uk-UA");
+const nf = new Intl.NumberFormat(locale === "en" ? "en-US" : "uk-UA");
+const localizedName = catName(category, locale);
 
 // URL helpers preserve the other active filters
 const gQuery = gender === "all" ? "" : `&g=${gender}`;
@@ -53,26 +59,26 @@ const brandHref = (b?: string) => {
 <Layout
   nav="catalog"
   gender={gender}
-  title={`${category.nameUk} — КРІЙ`}
-  description={`${category.nameUk}: товари українських брендів. ${nf.format(total)} позицій у наявності.`}
+  title={`${localizedName} — КРІЙ`}
+  description={`${localizedName}: ${nf.format(total)} ${t("cat.products")}.`}
 >
   <section class="section">
     <div class="container">
-      <span class="eyebrow"><a href="/">Каталог</a> / {category.nameUk}</span>
+      <span class="eyebrow"><a href="/">{t("nav.catalog")}</a> / {localizedName}</span>
       <div class="section__head">
-        <h2>{category.nameUk}</h2>
-        <span class="count">{nf.format(total)} товарів</span>
+        <h2>{localizedName}</h2>
+        <span class="count">{nf.format(total)} {t("cat.products")}</span>
       </div>
 
       {
         brandFacets.length > 1 && (
-          <nav class="brand-filter" aria-label="Фільтр за брендом">
+          <nav class="brand-filter" aria-label="Brand filter">
             <a
               href={brandHref()}
               class:list={["brand-chip", { active: !activeBrand }]}
               aria-current={!activeBrand ? "true" : undefined}
             >
-              Усі бренди
+              {t("cat.allBrands")}
             </a>
             {brandFacets.map((b) => (
               <a
@@ -96,16 +102,12 @@ const brandHref = (b?: string) => {
           </div>
         ) : (
           <div class="empty-state">
-            <h3>Поки порожньо</h3>
-            <p>
-              {gender === "all"
-                ? "У цій категорії ще немає товарів у наявності. Загляни в інші розділи або повернись пізніше — каталог оновлюється щодня."
-                : "У цьому фільтрі поки немає товарів. Спробуй показати всі або іншу категорію."}
-            </p>
+            <h3>{t("cat.emptyTitle")}</h3>
+            <p>{gender === "all" ? t("cat.emptyAll") : t("cat.emptyFilter")}</p>
             {gender === "all" ? (
-              <a class="btn btn--ghost" href="/">← До категорій</a>
+              <a class="btn btn--ghost" href="/">{t("cat.toCategories")}</a>
             ) : (
-              <a class="btn btn--ghost" href={`/c/${slug}`}>Показати всі →</a>
+              <a class="btn btn--ghost" href={`/c/${slug}`}>{t("cat.showAll")}</a>
             )}
           </div>
         )
@@ -113,9 +115,9 @@ const brandHref = (b?: string) => {
 
       {
         totalPages > 1 && (
-          <nav class="pagination" aria-label="Сторінки">
+          <nav class="pagination" aria-label="Pagination">
             <a class={page <= 1 ? "disabled" : ""} href={pageHref(page - 1)} rel="prev">
-              ← Назад
+              {t("cat.prev")}
             </a>
             <span>
               {page} / {totalPages}
@@ -125,7 +127,7 @@ const brandHref = (b?: string) => {
               href={pageHref(page + 1)}
               rel="next"
             >
-              Далі →
+              {t("cat.next")}
             </a>
           </nav>
         )

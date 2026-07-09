@@ -1,6 +1,18 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import { getCategories, getCategoryCounts, getBrands, getTotalInStock, type GenderFilter } from "../lib/catalog";
+import {
+  getCategories,
+  getCategoryCounts,
+  getBrands,
+  getTotalInStock,
+  catName,
+  brandDesc,
+  type GenderFilter,
+} from "../lib/catalog";
+import { getLocale, useT } from "../lib/i18n";
+
+const locale = getLocale(Astro.cookies);
+const t = useT(locale);
 
 const gParam = Astro.url.searchParams.get("g");
 const gender: GenderFilter = gParam === "men" || gParam === "women" ? gParam : "all";
@@ -22,21 +34,18 @@ const topCategories = categories
 // carry the active gender into category links so the filter isn't lost
 const catHref = (slug: string) => (gender === "all" ? `/c/${slug}` : `/c/${slug}?g=${gender}`);
 
-const nf = new Intl.NumberFormat("uk-UA");
+const nf = new Intl.NumberFormat(locale === "en" ? "en-US" : "uk-UA");
 ---
 
 <Layout nav="catalog" gender={gender}>
   <section class="hero">
     <div class="container">
-      <h1>Знайди свій <span class="ye">крій</span>.</h1>
-      <p class="hero__lede">
-        Одяг українських брендів — зібраний по категоріях в одному місці.
-        Обирай, порівнюй, переходь і купуй напряму в бренда.
-      </p>
+      <h1>{t("home.heroA")} <span class="ye">{t("home.heroAccent")}</span>.</h1>
+      <p class="hero__lede">{t("home.lede")}</p>
       <div class="hero__meta">
-        <span><strong>{nf.format(total)}</strong> товарів у наявності</span>
-        <span><strong>{allBrands.length}</strong> брендів</span>
-        <span><strong>{topCategories.length}</strong> категорій</span>
+        <span><strong>{nf.format(total)}</strong> {t("home.inStock")}</span>
+        <span><strong>{allBrands.length}</strong> {t("home.brands")}</span>
+        <span><strong>{topCategories.length}</strong> {t("home.categories")}</span>
       </div>
     </div>
   </section>
@@ -48,8 +57,8 @@ const nf = new Intl.NumberFormat("uk-UA");
       <section class="section">
         <div class="container">
           <div class="section__head">
-            <h2>Обрані бренди</h2>
-            <span class="count">РЕКОМЕНДУЄМО</span>
+            <h2>{t("home.featured")}</h2>
+            <span class="count">{t("home.recommended")}</span>
           </div>
           <ul class="brand-list">
             {featured.map((b) => (
@@ -58,7 +67,7 @@ const nf = new Intl.NumberFormat("uk-UA");
                   {b.name}
                   <span class="badge-featured">featured</span>
                 </span>
-                <span class="brand-card__desc">{b.description}</span>
+                <span class="brand-card__desc">{brandDesc(b, locale)}</span>
                 <a
                   class="brand-card__link"
                   href={`/out?b=${encodeURIComponent(b.slug)}&u=${encodeURIComponent(b.siteUrl)}`}
@@ -78,8 +87,8 @@ const nf = new Intl.NumberFormat("uk-UA");
   <section class="section">
     <div class="container">
       <div class="section__head">
-        <h2>Категорії</h2>
-        <span class="count">{topCategories.length} розділів</span>
+        <h2>{t("home.categoriesTitle")}</h2>
+        <span class="count">{topCategories.length} {t("home.sections")}</span>
       </div>
       <ul class="cat-index">
         {
@@ -87,7 +96,7 @@ const nf = new Intl.NumberFormat("uk-UA");
             <li>
               <a href={catHref(c.slug)}>
                 <span class="idx">{String(i + 1).padStart(2, "0")}</span>
-                <span class="name">{c.nameUk}</span>
+                <span class="name">{catName(c, locale)}</span>
                 <span class="count-n">{c.count}</span>
                 <span class="arrow">→</span>
               </a>

@@ -125,6 +125,21 @@ every click-through — the value we show brands, and the basis of the pitch on
 
 ---
 
+## Localization (uk / en)
+
+Two locales. The locale lives in a `lang` cookie (clean URLs, persists across
+pages); the `/set-lang` endpoint flips it and a UK/EN switch sits in the header.
+
+- **UI chrome** — static dictionary in `src/lib/i18n.ts` (`useT(locale)`).
+- **Categories** — `nameEn` field on the collection; `catName(cat, locale)`.
+- **Brand descriptions** — `descriptionEn` field; `brandDesc(brand, locale)`.
+- **Product titles are NOT translated** — they stay as the brand wrote them.
+  ~60% are already English, and fashion names are brand identity; machine
+  translation would degrade them. This matches how marketplaces handle it.
+
+The home hero pun survives translation: "Знайди свій **крій**" → "Find your
+**fit**" (both the accent word means cut *and* "your own thing").
+
 ## Gender
 
 Each brand has a `gender` (`men` / `women` / `unisex`); products inherit it as
